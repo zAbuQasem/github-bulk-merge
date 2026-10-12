@@ -1,7 +1,7 @@
 # Bulk Merge for GitHub
 
 [![Test](https://github.com/zAbuQasem/github-bulk-merge/actions/workflows/test.yml/badge.svg)](https://github.com/zAbuQasem/github-bulk-merge/actions/workflows/test.yml)
-[![Release](https://img.shields.io/github/v/release/zAbuQasem/github-bulk-merge)](https://github.com/zAbuQasem/github-bulk-merge/releases/latest)
+[![Release](https://github.com/zAbuQasem/github-bulk-merge/actions/workflows/release.yml/badge.svg)](https://github.com/zAbuQasem/github-bulk-merge/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 A Chrome extension that adds a **Bulk merge** button to GitHub's pull request list. Tick as many pull requests as you like. Only the ones that are actually ready get merged.
