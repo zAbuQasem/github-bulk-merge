@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Bulk Merge for GitHub",
+  "version": "1.0.0",
+  "description": "Bulk merge from GitHub's pull request list. Only pull requests whose checks have all finished and passed are merged.",
+  "minimum_chrome_version": "140",
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.github.com/*"],
+  "background": {
+    "service_worker": "src/worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"]
+    }
+  ],
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "Bulk Merge for GitHub settings",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  }
+}

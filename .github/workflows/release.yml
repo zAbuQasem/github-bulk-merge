@@ -1,0 +1,192 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, the same as in extension/manifest.json (for example v1.2.0)
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
+
+  # The changelog action only needs to read, so it runs here, away from the release job's write token.
+  changes:
+    name: Collect the changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      previous: ${{ steps.previous.outputs.tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Find the previous release
+        id: previous
+        run: echo "tag=$(git describe --tags --abbrev=0 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+
+      # Groups the conventional commits since the previous release by type. Commit text comes from
+      # contributors, so the transformers flatten line breaks, then escape markdown and the action's
+      # own #{{...}} placeholders: no disguised links, images, headings or expanded commit bodies.
+      # Backslash and backtick are written as \x5c and \x60 because the action rewrites the first
+      # pair of backslashes in every pattern.
+      - name: Group the commits by type
+        id: changelog
+        if: steps.previous.outputs.tag != ''
+        uses: mikepenz/release-changelog-builder-action@aa013739bbc8e7067dbbecd4525ff11aeb51a84b # v6.4.0
+        with:
+          mode: COMMIT
+          fromTag: ${{ steps.previous.outputs.tag }}
+          toTag: ${{ github.sha }}
+          failOnError: true
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}",
+              "commit_template": "- #{{TITLE}} ([#{{SHORT_SHA}}](${{ github.server_url }}/${{ github.repository }}/commit/#{{MERGE_SHA}}))",
+              "categories": [
+                { "title": "### Features", "labels": ["feat"] },
+                { "title": "### Bug fixes", "labels": ["fix"] },
+                { "title": "### Security", "labels": ["security"] },
+                { "title": "### Performance", "labels": ["perf"] },
+                { "title": "### Refactoring", "labels": ["refactor"] },
+                { "title": "### Documentation", "labels": ["docs"] },
+                { "title": "### Chores", "labels": ["chore"] }
+              ],
+              "ignore_labels": [],
+              "label_extractor": [
+                { "pattern": "^(?:(feat|fix|security|perf|refactor|docs|chore)(?:\\([^)]*\\))?!?: [\\s\\S]*|[\\s\\S]*)$", "target": "$1", "on_property": "title" }
+              ],
+              "transformers": [
+                { "pattern": "[\\r\\u2028\\u2029]", "target": " " },
+                { "pattern": "^(feat|fix|security|perf|refactor|docs|chore)(\\([^)]*\\))?!?: ", "target": "" },
+                { "pattern": "([\\x5c\\x60*_\\[\\]()<>!#|~{}])", "target": "\\$1" }
+              ],
+              "custom_placeholders": [
+                { "name": "SHORT_SHA", "source": "MERGE_SHA", "transformer": { "pattern": "^([0-9a-f]{7})[0-9a-f]*$", "target": "$1" } }
+              ]
+            }
+
+  release:
+    name: Package and publish
+    needs: [test, changes]
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the version
+        run: |
+          if [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo "::error::Releases are made from main"
+            exit 1
+          fi
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::The version must look like v1.2.0"
+            exit 1
+          fi
+          if [ "v$(jq -r .version extension/manifest.json)" != "$VERSION" ]; then
+            echo "::error::Bump the version in extension/manifest.json to ${VERSION#v} first"
+            exit 1
+          fi
+          # The release action would update an existing release instead of failing, and a draft has no
+          # tag yet, so look for both. The lookup is its own command, so an API error fails the step.
+          existing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$VERSION\") | .id")
+          if git rev-parse --quiet --verify "refs/tags/$VERSION" > /dev/null || [ -n "$existing" ]; then
+            echo "::error::$VERSION already has a tag or a release. If it is a draft left by a failed run, delete it and run again."
+            exit 1
+          fi
+
+      - name: Package the extension
+        run: |
+          mkdir dist
+          (cd extension && zip -qr -X "../dist/github-bulk-merge-$VERSION.zip" .)
+          (cd dist && sha256sum -- *.zip > SHA256SUMS)
+
+      - name: Write the release notes
+        env:
+          PREVIOUS: ${{ needs.changes.outputs.previous }}
+          CHANGES: ${{ needs.changes.outputs.changelog }}
+        run: |
+          headings='### (Features|Bug fixes|Security|Performance|Refactoring|Documentation|Chores)' # as in the changes job
+          link="\(\[[0-9a-f]{7}\]\(${GITHUB_SERVER_URL//./\\.}/${GITHUB_REPOSITORY//./\\.}/commit/[0-9a-f]{40}\)\)"
+          if [ -z "$PREVIOUS" ]; then
+            CHANGES='First release.'
+          elif [ -z "${CHANGES//[[:space:]]/}" ] || [ "$CHANGES" = '- no changes' ]; then
+            CHANGES='No notable changes.' # "- no changes" is the action's text for an empty range
+          # The action only warns when a transformer is invalid, so check its output is what the
+          # configuration produces: headings, and entries ending in a link to one of this repository's
+          # commits with no live markup before it (an even run of backslashes leaves the next character
+          # live). Counting matches means a grep error rejects the notes instead of passing them.
+          elif [ "$(grep -cvxE "($headings|- .+ $link)?" <<< "$CHANGES")" != 0 ] \
+            || [ "$(sed -nE "s|^- (.*) $link\$|\1|p" <<< "$CHANGES" | grep -cP '(?<!\\)(?:\\\\)*[][()<>#]')" != 0 ]; then
+            echo "::error::The release notes contain unexpected or unescaped markdown. They were:"
+            printf '  %s\n' "${CHANGES//$'\n'/$'\n  '}"
+            exit 1
+          fi
+          CHANGES=$(printf '%s' "$CHANGES") # drops the blank lines the action ends with
+          printf '\n%s\n' "$CHANGES" > changes.md
+          {
+            cat changes.md
+            echo
+            echo '### Install'
+            echo
+            echo "Download \`github-bulk-merge-$VERSION.zip\`, unzip it, open \`chrome://extensions\`, turn on **Developer mode** and choose **Load unpacked** on the unzipped folder."
+            echo
+            echo "SHA-256: \`$(cut -d ' ' -f 1 dist/SHA256SUMS)\`. To check a download, run \`sha256sum --check SHA256SUMS\` next to both files."
+          } > notes.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ inputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ inputs.version }}
+          body_path: notes.md
+          files: |
+            dist/github-bulk-merge-${{ inputs.version }}.zip
+            dist/SHA256SUMS
+          fail_on_unmatched_files: true
+          make_latest: true
+
+      # Newest entry first, right under the marker. Written through the contents API, so the job never
+      # holds git credentials, and not as a conventional commit, which keeps it out of the next notes.
+      # The release is already out by now: if main refuses the commit, this only warns.
+      - name: Add the release to CHANGELOG.md
+        run: |
+          printf '\n## %s (%s)\n' "$VERSION" "$(date -u +%Y-%m-%d)" > entry.md
+          cat changes.md >> entry.md
+          sed '/<!-- releases -->/r entry.md' CHANGELOG.md > changelog.md
+          if cmp -s CHANGELOG.md changelog.md || ! gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/CHANGELOG.md" \
+              -f message="Update the changelog for $VERSION" \
+              -f content="$(base64 -w0 changelog.md)" \
+              -f sha="$(git rev-parse HEAD:CHANGELOG.md)" \
+              -f branch=main > /dev/null; then
+            echo "::warning::CHANGELOG.md was not updated. The entry is in this run's summary; add it by hand."
+            cat entry.md >> "$GITHUB_STEP_SUMMARY"
+          fi

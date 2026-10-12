@@ -1,0 +1,22 @@
+{
+  "name": "github-bulk-merge",
+  "private": true,
+  "description": "Chrome extension that bulk-merges ready pull requests from GitHub's pull request list",
+  "license": "MIT",
+  "author": "Zeyad AbuLaban <zeyad.abulabann@gmail.com> (https://www.linkedin.com/in/zeyad-abulaban)",
+  "homepage": "https://github.com/zAbuQasem/github-bulk-merge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zAbuQasem/github-bulk-merge.git"
+  },
+  "bugs": "https://github.com/zAbuQasem/github-bulk-merge/issues",
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test 'tests/unit/*.test.js'",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

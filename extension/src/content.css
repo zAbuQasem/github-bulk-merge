@@ -1,0 +1,465 @@
+/* Injected into github.com. Every colour comes from the page's Primer variables so light,
+   dark, dimmed, high-contrast and colourblind themes all follow; fallbacks are Primer light. */
+
+/* ---- readiness in each row's metadata line ------------------------------------------ */
+
+.prm-status {
+  /* One item of GitHub's flex metadata line, built like GitHub's own: its separator dot, then the status. */
+  display: inline-flex;
+  align-items: center;
+}
+
+.prm-sep {
+  margin: 0 4px;
+}
+
+.prm-chip {
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: var(--borderRadius-medium, 6px);
+  font-weight: 500;
+  color: var(--fgColor-muted, #59636e);
+}
+
+.prm-chip .prm-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.prm-chip[data-tone="success"] { color: var(--fgColor-success, #1a7f37); font-weight: 600; }
+.prm-chip[data-tone="danger"] { color: var(--fgColor-danger, #d1242f); }
+.prm-chip[data-tone="attention"] { color: var(--fgColor-attention, #9a6700); }
+.prm-chip[data-tone="done"] { color: var(--fgColor-done, #8250df); }
+
+.prm-fix {
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fgColor-accent, #0969da);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.prm-icon {
+  flex: none;
+  fill: currentColor;
+  vertical-align: text-bottom;
+}
+
+/* Bulk merge pressed with nothing ready: each selected row's status pulses to say why. */
+.prm-nudge {
+  animation: prm-nudge 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes prm-nudge {
+  0% { background: var(--bgColor-attention-muted, #fff8c5); transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(0); }
+  100% { background: transparent; }
+}
+
+@keyframes prm-nudge-still {
+  0%, 60% { background: var(--bgColor-attention-muted, #fff8c5); }
+  100% { background: transparent; }
+}
+
+.prm-spin {
+  animation: prm-spin 1.2s linear infinite;
+}
+
+@keyframes prm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- toolbar button (a deep clone of GitHub's own toolbar button) --------------------- */
+
+.prm-action-button {
+  white-space: nowrap;
+}
+
+.prm-action-icon {
+  display: inline-flex;
+  color: var(--fgColor-muted, #59636e);
+}
+
+/* Only when the cloned button is not a Primer one. */
+.prm-action-button:not([class*="prc-Button"]) [data-component="buttonContent"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prm-counter {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 2em;
+  background: var(--bgColor-neutral-muted, #818b981f);
+  color: var(--fgColor-default, #1f2328);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.prm-counter[hidden] {
+  display: none;
+}
+
+.prm-action-button:disabled,
+.prm-action-button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.prm-action-button[aria-disabled="true"] {
+  color: var(--fgColor-disabled, #818b98);
+}
+
+/* ---- confirm and progress dialog ---------------------------------------------------- */
+
+.prm-dialog {
+  box-sizing: border-box;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(80vh, 720px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--overlay-borderColor, #d1d9e080);
+  border-radius: var(--borderRadius-large, 12px);
+  background: var(--overlay-bgColor, #ffffff);
+  color: var(--fgColor-default, #1f2328);
+  box-shadow: var(--shadow-floating-large, 0 0 0 1px #d1d9e0, 0 40px 80px #25292e3d);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+.prm-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: prm-enter 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes prm-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+.prm-dialog::backdrop {
+  background: var(--overlay-backdrop-bgColor, #c8d1da66);
+}
+
+.prm-dialog *,
+.prm-dialog *::before,
+.prm-dialog *::after {
+  box-sizing: border-box;
+}
+
+.prm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--borderColor-muted, #d1d9e0b3);
+}
+
+.prm-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.prm-subtitle {
+  margin: 2px 0 0;
+  color: var(--fgColor-muted, #59636e);
+  font-size: 12px;
+}
+
+.prm-close {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin: -4px -8px 0 0;
+  border: 0;
+  border-radius: var(--borderRadius-medium, 6px);
+  background: transparent;
+  color: var(--fgColor-muted, #59636e);
+  cursor: pointer;
+}
+
+.prm-close:hover {
+  background: var(--control-transparent-bgColor-hover, #818b9826);
+  color: var(--fgColor-default, #1f2328);
+}
+
+.prm-body {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+  flex: 1;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--borderColor-default, #d1d9e0) transparent;
+}
+
+.prm-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.prm-field label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prm-select-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 1 220px;
+  min-width: 0;
+}
+
+.prm-select {
+  width: 100%;
+  height: 32px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--control-borderColor-rest, #d1d9e0);
+  border-radius: var(--borderRadius-medium, 6px);
+  background: var(--control-bgColor-rest, #f6f8fa);
+  color: var(--fgColor-default, #1f2328);
+  font: inherit;
+  appearance: none;
+  cursor: pointer;
+}
+
+.prm-select:hover:not(:disabled) {
+  background: var(--control-bgColor-hover, #eff2f5);
+}
+
+.prm-select:disabled {
+  color: var(--fgColor-disabled, #818b98);
+  background: var(--bgColor-disabled, #eff2f5);
+  cursor: not-allowed;
+}
+
+.prm-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  color: var(--fgColor-muted, #59636e);
+  pointer-events: none;
+}
+
+.prm-list,
+.prm-excluded-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  border-radius: var(--borderRadius-medium, 6px);
+}
+
+.prm-item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 2px 12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--borderColor-muted, #d1d9e0b3);
+}
+
+.prm-item:first-child,
+.prm-excluded-list li:first-child {
+  border-top: 0;
+}
+
+.prm-item-icon {
+  display: flex;
+  height: 21px;
+  align-items: center;
+  color: var(--fgColor-muted, #59636e);
+}
+
+.prm-item-main {
+  min-width: 0;
+}
+
+.prm-item-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.prm-item-number {
+  color: var(--fgColor-muted, #59636e);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.prm-item-detail {
+  display: block;
+  color: var(--fgColor-muted, #59636e);
+  font-size: 12px;
+}
+
+.prm-item-detail:empty {
+  display: none;
+}
+
+.prm-item-state {
+  color: var(--fgColor-muted, #59636e);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 21px;
+  white-space: nowrap;
+}
+
+.prm-item[data-tone="danger"] :is(.prm-item-icon, .prm-item-state) { color: var(--fgColor-danger, #d1242f); }
+.prm-item[data-tone="attention"] :is(.prm-item-icon, .prm-item-state) { color: var(--fgColor-attention, #9a6700); }
+.prm-item[data-tone="done"] :is(.prm-item-icon, .prm-item-state) { color: var(--fgColor-done, #8250df); }
+
+.prm-excluded {
+  display: grid;
+  gap: 8px;
+}
+
+.prm-excluded-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.prm-excluded-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--borderColor-muted, #d1d9e0b3);
+  color: var(--fgColor-muted, #59636e);
+  font-size: 12px;
+}
+
+.prm-excluded-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prm-excluded-reason {
+  margin: 0;
+}
+
+.prm-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--borderColor-muted, #d1d9e0b3);
+}
+
+.prm-progress {
+  flex: 1 1 240px;
+  margin: 0;
+  color: var(--fgColor-muted, #59636e);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.prm-progress:empty {
+  flex-basis: 0;
+}
+
+/* Second confirmation: the selection includes pull requests that will be skipped. */
+.prm-dialog[data-phase="confirm-skip"] .prm-progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--fgColor-attention, #9a6700);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.prm-dialog[data-phase="confirm-skip"] .prm-progress .prm-icon {
+  margin-top: 3px;
+}
+
+.prm-dialog[data-phase="confirm-skip"] .prm-excluded-list {
+  border-color: var(--borderColor-attention-emphasis, #9a6700);
+}
+
+.prm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--button-default-borderColor-rest, #d1d9e0);
+  border-radius: var(--borderRadius-medium, 6px);
+  background: var(--button-default-bgColor-rest, #f6f8fa);
+  color: var(--button-default-fgColor-rest, #25292e);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.prm-btn:hover:not(:disabled) {
+  background: var(--button-default-bgColor-hover, #eff2f5);
+}
+
+.prm-btn-primary {
+  border-color: var(--button-primary-borderColor-rest, #1f232826);
+  background: var(--button-primary-bgColor-rest, #1f883d);
+  color: var(--button-primary-fgColor-rest, #ffffff);
+}
+
+.prm-btn-primary:hover:not(:disabled) {
+  background: var(--button-primary-bgColor-hover, #1c8139);
+}
+
+.prm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.prm-btn[hidden],
+.prm-close[hidden] {
+  display: none;
+}
+
+.prm-dialog :focus-visible {
+  outline: 2px solid var(--focus-outlineColor, #0969da);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prm-spin,
+  .prm-dialog[open] {
+    animation: none;
+  }
+
+  .prm-nudge {
+    animation-name: prm-nudge-still;
+  }
+}

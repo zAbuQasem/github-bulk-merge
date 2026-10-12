@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bulk Merge for GitHub settings</title>
+  <style>
+    /* Light and dark in one place: the system decides unless GitHub's own choice sets data-scheme. */
+    :root {
+      color-scheme: light dark;
+      --fg: light-dark(#1f2328, #f0f6fc);
+      --fg-muted: light-dark(#59636e, #9198a1);
+      --bg: light-dark(#ffffff, #0d1117);
+      --bg-muted: light-dark(#f6f8fa, #151b23);
+      --border: light-dark(#d1d9e0, #3d444d);
+      --border-muted: light-dark(#d1d9e0b3, #3d444db3);
+      --accent: light-dark(#0969da, #4493f8);
+      --done: light-dark(#8250df, #ab7df8);
+      --success: light-dark(#1a7f37, #3fb950);
+      --danger: light-dark(#d1242f, #ff7b72);
+      --danger-muted: light-dark(#ffebe9, #f851491a);
+      --primary-bg: light-dark(#1f883d, #238636);
+      --primary-bg-hover: light-dark(#1c8139, #1f7a31);
+      --primary-fg: #ffffff;
+      --primary-border: light-dark(#1f232826, #ffffff26);
+      --button-bg: light-dark(#f6f8fa, #212830);
+      --button-bg-hover: light-dark(#eff2f5, #262c36);
+      --focus: light-dark(#0969da, #1f6feb);
+    }
+
+    :root[data-scheme="light"] { color-scheme: light; }
+    :root[data-scheme="dark"] { color-scheme: dark; }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--done);
+      color: var(--primary-fg);
+    }
+
+    h1 { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.25; }
+    header p { margin: 4px 0 0; color: var(--fg-muted); }
+
+    section {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    section > h2 {
+      margin: 0;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-muted);
+      background: var(--bg-muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .panel { padding: 16px; }
+
+    label { display: block; margin-bottom: 8px; font-weight: 600; }
+
+    .row { display: flex; gap: 8px; }
+
+    input[type="password"] {
+      flex: 1;
+      min-width: 0;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--fg);
+      font: inherit;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      caret-color: var(--accent);
+    }
+
+    button {
+      height: 32px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--button-bg);
+      color: var(--fg);
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled) { background: var(--button-bg-hover); }
+    button:disabled { opacity: 0.6; cursor: progress; }
+
+    button.primary {
+      border-color: var(--primary-border);
+      background: var(--primary-bg);
+      color: var(--primary-fg);
+    }
+
+    button.primary:hover:not(:disabled) { background: var(--primary-bg-hover); }
+
+    button.danger { color: var(--danger); }
+
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+    button:focus-visible { outline-offset: 2px; }
+
+    .hint { margin: 8px 0 0; color: var(--fg-muted); font-size: 12px; }
+    .hint + .hint { margin-top: 4px; }
+    a { color: var(--accent); text-underline-offset: 2px; }
+
+    .error {
+      margin: 12px 0 0;
+      padding: 8px 12px;
+      border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+      border-radius: 6px;
+      background: var(--danger-muted);
+      color: var(--fg);
+    }
+
+    .state { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .state strong, .locked { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-weight: 600; }
+    .state strong { margin: 0; }
+    .state p { margin: 4px 0 0; color: var(--fg-muted); font-size: 12px; }
+    .ok svg { fill: var(--success); }
+    .locked svg { fill: var(--fg-muted); }
+    .actions { display: flex; gap: 8px; }
+    form label { margin-top: 12px; }
+    form label:first-of-type { margin-top: 0; }
+    form > input { width: 100%; }
+    button.link {
+      height: auto;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--accent);
+      font-size: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    button.link:hover:not(:disabled) { background: none; }
+
+    ol.rules { margin: 0; padding: 0; list-style: none; }
+
+    ol.rules li {
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    ol.rules li + li { border-top: 1px solid var(--border-muted); }
+    ol.rules svg { margin-top: 3px; fill: var(--fg-muted); }
+    ol.rules p { margin: 0; color: var(--fg-muted); font-size: 12px; }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <svg hidden><symbol id="check" viewBox="0 0 16 16"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></symbol></svg>
+  <main>
+    <header>
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor"><path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/></svg>
+      </div>
+      <div>
+        <h1>Bulk Merge for GitHub</h1>
+        <p>Bulk merge ready pull requests from GitHub's pull request list.</p>
+      </div>
+    </header>
+
+    <section aria-labelledby="token-title">
+      <h2 id="token-title">GitHub token</h2>
+      <div class="panel">
+        <div id="connected" class="state" hidden>
+          <div>
+            <strong class="ok"><svg width="16" height="16" aria-hidden="true"><use href="#check"/></svg><span id="login"></span></strong>
+            <p>Unlocked until Chrome closes. On disk the token is kept only encrypted with your passphrase.</p>
+          </div>
+          <div class="actions">
+            <button type="button" id="lock">Lock now</button>
+            <button type="button" id="remove" class="danger">Remove token</button>
+          </div>
+        </div>
+
+        <form id="unlock" hidden>
+          <p class="locked"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 4a4 4 0 0 1 8 0v2h.25c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 12.25 15h-8.5A1.75 1.75 0 0 1 2 13.25v-5.5C2 6.784 2.784 6 3.75 6H4Zm8.25 3.5h-8.5a.25.25 0 0 0-.25.25v5.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25ZM10.5 6V4a2.5 2.5 0 1 0-5 0v2Z"/></svg><span id="locked-login"></span></p>
+          <label for="unlock-passphrase">Passphrase</label>
+          <div class="row">
+            <input id="unlock-passphrase" type="password" autocomplete="current-password" required>
+            <button type="submit" class="primary" id="unlock-submit">Unlock</button>
+          </div>
+          <p class="hint">Unlocks until Chrome closes. Forgot it? <button type="button" class="link" id="forget">Remove the token</button> and save a new one.</p>
+        </form>
+
+        <form id="connect" hidden>
+          <label for="token">Classic personal access token</label>
+          <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_…" required>
+          <label for="passphrase">Passphrase</label>
+          <input id="passphrase" type="password" autocomplete="new-password" minlength="10" required>
+          <label for="passphrase-confirm">Confirm passphrase</label>
+          <div class="row">
+            <input id="passphrase-confirm" type="password" autocomplete="new-password" minlength="10" required>
+            <button type="submit" class="primary" id="save">Save token</button>
+          </div>
+          <p class="hint">
+            <a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=Bulk%20Merge%20for%20GitHub" target="_blank" rel="noopener">Create a classic token with the <code>repo</code> scope</a>.
+            For an organization with SAML SSO, authorize the token for that organization afterwards.
+          </p>
+          <p class="hint">The token is encrypted with your passphrase (at least 10 characters) before it is saved, and you unlock it once each time Chrome starts. The passphrase is never stored; if you lose it, save the token again.</p>
+          <p class="hint">Fine-grained tokens are refused: GitHub does not guarantee they can read check runs, and checks it cannot read could look green.</p>
+        </form>
+
+        <p id="error" class="error" role="alert" hidden></p>
+      </div>
+    </section>
+
+    <section aria-labelledby="rules-title">
+      <h2 id="rules-title">When a pull request is merged</h2>
+      <div class="panel">
+        <ol class="rules">
+          <li><svg width="16" height="16" aria-hidden="true"><use href="#check"/></svg>
+            <div>Open, not a draft, no merge conflicts<p>GitHub must also report it clean to merge, so branch rules and required reviews are respected.</p></div></li>
+          <li><svg width="16" height="16" aria-hidden="true"><use href="#check"/></svg>
+            <div>Every check finished and passed<p>On the head commit, every check run and status is complete with success, neutral or skipped. Running, cancelled, failed, unreadable, or no checks at all means not ready.</p></div></li>
+          <li><svg width="16" height="16" aria-hidden="true"><use href="#check"/></svg>
+            <div>Checked again right before it merges<p>Each pull request is re-read just before its merge and merged only at the commit you confirmed, without bypassing repository rules.</p></div></li>
+          <li><svg width="16" height="16" aria-hidden="true"><use href="#check"/></svg>
+            <div>A mixed selection is confirmed twice<p>Any pull request can be ticked. If the selection includes some that are not ready, Bulk merge says how many will be skipped and asks again before merging the ready ones.</p></div></li>
+        </ol>
+      </div>
+    </section>
+  </main>
+  <script src="options.js" type="module"></script>
+</body>
+</html>
